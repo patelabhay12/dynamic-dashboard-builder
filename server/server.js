@@ -5,24 +5,25 @@ const { db, testConnection } = require("./config/db.js");
 
 const app = express();
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5175',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5175",
+    credentials: true,
+  }),
+);
 
 app.use(bodyParser.json());
-
 
 app.get("/api/layout", async (req, res) => {
   try {
     const [results] = await db.query(
-      "SELECT data FROM layout ORDER BY id DESC LIMIT 1"
+      "SELECT data FROM layout ORDER BY id DESC",
     );
 
     if (results.length) {
       const data = results[0].data;
       // Check if data is already an object or needs parsing
-      if (typeof data === 'string') {
+      if (typeof data === "string") {
         res.json(JSON.parse(data));
       } else {
         res.json(data || []);
@@ -36,26 +37,26 @@ app.get("/api/layout", async (req, res) => {
   }
 });
 
-
 app.post("/api/layout", async (req, res) => {
   try {
+    const data =
+      typeof req.body === "string" ? req.body : JSON.stringify(req.body);
 
-    const data = typeof req.body === 'string' 
-      ? req.body 
-      : JSON.stringify(req.body);
-
-    await db.query(
-      "INSERT INTO layout (data) VALUES (?)",
-      [data]
-    );
+    await db.query("DELETE FROM layout");
+    await db.query("INSERT INTO layout (data) VALUES (?)", [data]);
 
     res.json({ success: true, message: "Saved" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Error saving layout", error: err.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error saving layout",
+        error: err.message,
+      });
   }
 });
-
 
 const startServer = async () => {
   await testConnection();
